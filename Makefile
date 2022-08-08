@@ -4,7 +4,7 @@ main: main.c
 	gcc main.c -o main ${FLAGS}
 
 run:
-	./main
+	./main points.txt 4
 
 clean:
 	rm -f main
