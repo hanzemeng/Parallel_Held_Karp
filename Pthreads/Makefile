@@ -1,10 +1,12 @@
 FLAGS = -Wall -lm -lpthread
 
-main: main.c
-	gcc main.c -o main ${FLAGS}
+main_cycle: main_cycle.c
+	gcc main_cycle.c -o main_cycle ${FLAGS}
+main_block: main_block.c
+	gcc main_block.c -o main_block ${FLAGS}
 
 run:
-	./main points.txt 4
+	./main_cycle points2.txt 4
 
 clean:
-	rm -f main
+	rm -f main_block main_cycle
