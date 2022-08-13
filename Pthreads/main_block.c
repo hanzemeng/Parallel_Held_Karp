@@ -33,8 +33,8 @@ void dispatch_thread_work(float* thread_return_cost, int* thread_return_prev);
 // every thread's best path's second to last vertex is written to thread_return_prev
 void collect_thread_result(float* thread_return_cost, int* thread_return_prev, float* res_cost, int* res_path);
 
-#define INT_DIGIT 24 // max number of vertices - 1
-#define MAX_INT 16777216 // same as 2^INT_DIGIT
+#define INT_DIGIT 25 // max number of vertices - 1
+#define MAX_INT 33554432 // same as 2^INT_DIGIT
 #define LARGE_VALUE 666666;
 
 unsigned int all_path = 0;
