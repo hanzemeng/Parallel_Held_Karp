@@ -13,6 +13,11 @@ typedef struct
 typedef struct
 {
     int start;
+    int end;
+} dp_setup_input;
+typedef struct
+{
+    int start;
     float* return_cost;
     int* return_prev;
 } solve_wrapper_input;
@@ -153,14 +158,42 @@ void setup(const char** input_parameter)
     }
     fclose(filePointer);
 }
-void base_case_calculation()
+void* dp_setup(void* input)
 {
-    for(unsigned long long i=0; i<MAX_INT; i++)
+    unsigned long long start = ((dp_setup_input*)input)->start;
+    unsigned long long end = ((dp_setup_input*)input)->end;
+    for(unsigned long long i=start; i<end; i++)
     {
         for(unsigned long long j=0; j<INT_DIGIT; j++)
         {
             dp[i][j].cost = -1;
         }
+    }
+    return NULL;
+}
+void base_case_calculation()
+{
+    pthread_t thread_handles[thread_count];
+    dp_setup_input thread_inputs[thread_count];
+    unsigned long long k = (MAX_INT)%thread_count;
+    unsigned long long s = (MAX_INT)/thread_count;
+    for(unsigned long long i=0; i<thread_count; i++)
+    {   
+        if(i<k)
+        {
+            thread_inputs[i].start = i*s+i;
+            thread_inputs[i].end = thread_inputs[i].start+s+1;
+        }
+        else
+        {
+            thread_inputs[i].start = i*s+k;
+            thread_inputs[i].end = thread_inputs[i].start+s;
+        }
+        pthread_create(&thread_handles[i], NULL, dp_setup, (void*) &thread_inputs[i]);
+    }
+    for(int i=0; i<thread_count; i++)
+    {
+        pthread_join(thread_handles[i], NULL);
     }
 
     unsigned int mask = 0x00000001;
