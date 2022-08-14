@@ -24,22 +24,24 @@ typedef struct
 } solve_wrapper_input;
 typedef struct
 {
-    float cost;
-    int prev_end;
+    float cost; // cost of a path
+    int prev_end; // previously visited vertex
 } dp_node;
 
 float dist(const Point* a, const Point* b);
 double elapsed_seconds();
 
 void setup(const char** path); // read in input
-void base_case_calculation(); // setup dp and all_path
+void calculate_base_case(); // setup dp and all_path
 void dispatch_thread_work(float* thread_return_cost, int* thread_return_prev);
-// every thread's best path is written to thread_return_cost
+// every thread's best path's cost is written to thread_return_cost
 // every thread's best path's second to last vertex is written to thread_return_prev
 void collect_thread_result(float* thread_return_cost, int* thread_return_prev, float* res_cost, int* res_path);
+// global best path's cost is written to res_cost
+// best path is reconstructed and stored in res_path
 
-#define INT_DIGIT 25 // same as max number of vertices - 1
-#define MAX_INT 33554432 // same as 2^INT_DIGIT
+#define INT_DIGIT 24 // same as max number of vertices - 1
+#define MAX_INT 16777216 // same as 2^INT_DIGIT
 #define LARGE_VALUE 666666;
 
 unsigned int all_path = 0;
@@ -49,30 +51,30 @@ dp_node dp[MAX_INT][INT_DIGIT];
 
 float solve(unsigned int path, int end)
 {
-    if(dp[path][end].cost != -1)
+    if(dp[path][end].cost != -1) // if the sub problem is already solved
     {
         return dp[path][end].cost;
     }
 
-    float current_min = LARGE_VALUE;
+    float current_cost = LARGE_VALUE;
     float current_prev;
     unsigned int mask = 0x00000001;
-    for(int i=1; i<n; i++)
+    for(int i=1; i<n; i++) // for every bit position
     {
-        if((path & mask) != 0)
+        if((path & mask) != 0) // if the bit position is 1, solve the sub problem
         {
             unsigned int new_path = path & (~mask);
-            float temp = solve(new_path, i) + dist(&points[i], &points[end]);
-            if(current_min>temp)
+            float new_cost = solve(new_path, i) + dist(&points[i], &points[end]);
+            if(current_cost>new_cost) // for the shortest path
             {
-                current_min = temp;
-                current_prev = i;
+                current_cost = new_cost; // record the smallest cost
+                current_prev = i; // record the last visited vertex in the shortest path
             }
         }
         mask <<= 1;
     }
-    dp[path][end].prev_end = current_prev;
-    return dp[path][end].cost = current_min;
+    dp[path][end].prev_end = current_prev; // no protection because
+    return dp[path][end].cost = current_cost; // threads would write the same value
 }
 void* solve_wrapper(void* parameter)
 {
@@ -106,7 +108,7 @@ int main(const int agrc, const char** argv)
         exit(1);
     }
     setup(argv);
-    base_case_calculation();
+    calculate_base_case();
     
     float thread_return_cost[thread_count];
     int thread_return_prev[thread_count];
@@ -171,7 +173,7 @@ void* dp_setup(void* input)
     }
     return NULL;
 }
-void base_case_calculation()
+void calculate_base_case()
 {   
     pthread_t thread_handles[thread_count];
     dp_setup_input thread_inputs[thread_count];
