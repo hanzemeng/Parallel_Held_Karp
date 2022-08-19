@@ -56,7 +56,7 @@ float solve(unsigned int path, int end)
     }
 
     float current_cost = LARGE_VALUE;
-    float current_prev;
+    int current_prev;
     unsigned int mask = 0x00000001;
     for(int i=1; i<n; i++) // for every bit position
     {

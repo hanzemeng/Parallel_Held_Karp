@@ -10,8 +10,8 @@ main_block: main_block.c
 	gcc main_block.c -o main_block ${FLAGS}
 
 run:
-	./main_block octagon.txt 2
-	./main_cycle octagon.txt 2
+	./main_block points.txt 4
+	./main_cycle points.txt 4
 
 clean:
 	rm -f main_block main_cycle
