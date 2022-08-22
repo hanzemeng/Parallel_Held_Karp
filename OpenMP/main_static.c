@@ -26,7 +26,7 @@ float dist(const Point* a, const Point* b);
 double elapsed_seconds();
 
 void setup(const char** path); // read in input
-void base_case_calculation(); // setup dp and all_path
+void calculate_base_case(); // setup dp and all_path
 
 #define INT_DIGIT 24 // max number of vertices - 1
 #define MAX_INT 16777216 // same as 2^INT_DIGIT
@@ -76,10 +76,8 @@ int main(const int agrc, const char** argv)
     double ftime, start, end;
     if(agrc != 3) Usage(argv);
     setup(argv);
-    base_case_calculation();
+    calculate_base_case();
 
-    float thread_return_cost[thread_count];
-    int thread_return_prev[thread_count];
     float res_cost = LARGE_VALUE;
     int res_prev;
     int res_path[n];
@@ -165,7 +163,7 @@ float dist(const Point* a, const Point* b)
     float dif_y = (*a).y-(*b).y;
     return sqrt(dif_x*dif_x+dif_y*dif_y);
 }
-void base_case_calculation()
+void calculate_base_case()
 {
     for(unsigned long long i=0; i<MAX_INT; i++)
     {
