@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <pthread.h>
 #include <sys/time.h>
 #include <omp.h>
 
@@ -33,8 +32,6 @@ void base_case_calculation(); // setup dp and all_path
 #define MAX_INT 16777216 // same as 2^INT_DIGIT
 #define LARGE_VALUE 666666;
 
-const int big = 9999;
-
 unsigned int all_path = 0;
 int n, thread_count;
 Point* points;
@@ -42,30 +39,30 @@ dp_node dp[MAX_INT][INT_DIGIT];
 
 float solve(unsigned int path, int end)
 {
-    if(dp[path][end].cost != -1)
+    if(dp[path][end].cost != -1) // if the sub problem is already solved
     {
         return dp[path][end].cost;
     }
 
     float current_min = LARGE_VALUE;
-    float current_prev;
+    int current_prev;
     unsigned int mask = 0x00000001;
-    for(int i=1; i<n; i++)
+    for(int i=1; i<n; i++) // for every bit position
     {
-        if((path & mask) != 0)
+        if((path & mask) != 0) // if the bit position is 1, solve the sub problem
         {
             unsigned int new_path = path & (~mask);
             float temp = solve(new_path, i) + dist(&points[i], &points[end]);
-            if(current_min>temp)
+            if(current_min>temp) // for the shortest path
             {
-                current_min = temp;
-                current_prev = i;
+                current_min = temp; // record the smallest cost
+                current_prev = i; // record the last visited vertex in the shortest path
             }
         }
         mask <<= 1;
     }
-    dp[path][end].prev_end = current_prev;
-    return dp[path][end].cost = current_min;
+    dp[path][end].prev_end = current_prev; // no protection because
+    return dp[path][end].cost = current_min; // threads would write the same value
 }
 
 void Usage(const char** prog_name /* in */) {
@@ -89,10 +86,10 @@ int main(const int agrc, const char** argv)
     int index = n-1;
 
     start = elapsed_seconds();
+    //Dispatch the work to each thread by OpenMP
 #   pragma omp parallel num_threads(thread_count)
     {
-        // int my_rank = omp_get_thread_num();
-#       pragma omp for schedule(dynamic)
+#       pragma omp for schedule(static)
         for(int i=1;i<n;i++)
         {
             unsigned int mask = 0x00000001;
@@ -100,6 +97,8 @@ int main(const int agrc, const char** argv)
             unsigned int new_path = all_path & (~mask);
             float temp = solve(new_path, i) + dist(&points[i], &points[0]);
 #           pragma omp critical
+            //This enters the protection area because each thread
+            //might write to the same "res_cost" and "res_prev" paramter
             if(res_cost>temp)
             {
                 res_cost = temp;
@@ -117,10 +116,7 @@ int main(const int agrc, const char** argv)
     }
     res_path[index--] = 0;
 
-
-    // GET_TIME(end);
     end = elapsed_seconds();
-    // printf("res path value:%i\n",res_path[0]);
     float res_cost_actual = dist(&points[res_path[n-1]], &points[res_path[0]]);
     printf("Path: 0, ");
     for(int i=1; i<n; i++)
@@ -148,7 +144,6 @@ void setup(const char** input_parameter)
 
     fgets(input_line, 50, filePointer);
     n = strtol(input_line, NULL, 10);
-    // printf("n is:%s\n",input_parameter[2]);
     if(INT_DIGIT+1<n)
     {
         printf("Too many points.\n");
